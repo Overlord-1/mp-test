@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Container Auto-scaling Dashboard</title>
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🐳 Container Auto-scaling Dashboard</h1>
+                <div class="status-indicator">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="statusText">Connecting...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Panel - Controls -->
+            <div class="left-panel">
+                <div class="panel-section">
+                    <h3>🎮 Controls</h3>
+                    <div class="control-group">
+                        <label for="intensityInput">Work Intensity:</label>
+                        <input type="range" id="intensityInput" min="1" max="10" value="3">
+                        <span id="intensityValue">3</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="requestCount">Request Count:</label>
+                        <input type="number" id="requestCount" min="1" max="10" value="1">
+                    </div>
+                    <button id="sendRequestBtn" class="btn btn-primary">Send Request</button>
+                    <button id="sendBulkBtn" class="btn btn-secondary">Send Bulk Requests</button>
+                </div>
+
+                <div class="panel-section">
+                    <h3>📊 System Stats</h3>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Containers</div>
+                        <div class="stat-value" id="totalContainers">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Load</div>
+                        <div class="stat-value" id="totalLoad">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Last Update</div>
+                        <div class="stat-value" id="lastUpdate">Never</div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>🔧 Settings</h3>
+                    <div class="control-group">
+                        <label for="autoRefresh">Auto Refresh:</label>
+                        <input type="checkbox" id="autoRefresh" checked>
+                    </div>
+                    <div class="control-group">
+                        <label for="refreshInterval">Refresh Interval (s):</label>
+                        <input type="number" id="refreshInterval" min="1" max="10" value="2">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel - Graph -->
+            <div class="center-panel">
+                <div class="graph-container">
+                    <div class="graph-header">
+                        <h3>📈 Container Network Graph</h3>
+                        <div class="graph-controls">
+                            <button id="fitGraph" class="btn btn-small">Fit to Screen</button>
+                            <button id="resetGraph" class="btn btn-small">Reset View</button>
+                        </div>
+                    </div>
+                    <div id="networkGraph"></div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Logs -->
+            <div class="right-panel">
+                <div class="panel-section">
+                    <h3>📝 Activity Log</h3>
+                    <div class="log-container" id="logContainer">
+                        <div class="log-entry">
+                            <span class="log-time">00:00:00</span>
+                            <span class="log-message">System initialized</span>
+                        </div>
+                    </div>
+                    <button id="clearLogs" class="btn btn-small">Clear Logs</button>
+                </div>
+
+                <div class="panel-section">
+                    <h3>📋 Container Details</h3>
+                    <div id="containerDetails">
+                        <p class="no-data">Click on a container node to see details</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <span>🚀 Container Auto-scaling System</span>
+                <span id="connectionStatus">Disconnected</span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

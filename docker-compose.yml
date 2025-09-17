@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  # Build main-server image first
+  main-server-builder:
+    build:
+      context: ./main-server
+      dockerfile: Dockerfile
+    image: main-server:latest
+    command: /bin/true  # Exit immediately after build
+
+  routing-server:
+    build:
+      context: ./routing-server
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    depends_on:
+      - main-server-builder
+    restart: unless-stopped
