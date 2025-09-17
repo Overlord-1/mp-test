@@ -246,9 +246,9 @@ class ContainerManager:
             raise
     
     def _find_available_port(self) -> int:
-        """Find an available port for the new container"""
+        """Find an available port for the new container starting from 5002"""
         used_ports = {info['port'] for info in self.containers.values()}
-        port = 5001
+        port = 5002  # Start from 5002 to avoid using 5001
         while port in used_ports:
             port += 1
         return port
