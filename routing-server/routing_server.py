@@ -359,9 +359,17 @@ def work():
         # Find an available container
         container_id = container_manager.get_available_container()
         
-        # If no available container, create a new one
+        retries = 3
+        container_id = None
+        for attempt in range(retries):
+            container_id = container_manager.get_available_container()
+            if container_id:
+                break
+            time.sleep(1)  # wait before trying again
+
+        # Only create a new container if still none available
         if container_id is None:
-            logger.info("No available containers, creating new one")
+            logger.info("No available containers after retrying, creating new one")
             container_id = container_manager.create_new_container()
         
         # Increment load for the container

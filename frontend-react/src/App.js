@@ -6,144 +6,279 @@ const ROUTING_SERVER = 'http://localhost:8000';
 const styles = {
   container: {
     padding: '20px',
-    background: '#1a1a1a',
+    background: '#0a0a1a', // Deeper blue-black background
     minHeight: '100vh',
-    color: 'white',
+    fontFamily: "'Courier Prime', monospace",
+    color: '#00eaff', // Futuristic light blue text
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  title: {
+    textAlign: 'center',
+    fontSize: '2.5rem',
+    textShadow: '0 0 15px #00eaff',
+    marginBottom: '20px',
   },
   graphContainer: {
-    width: '800px',
-    height: '600px',
-    margin: '0 auto',
-    background: '#2a2a2a',
+    width: '900px', // Larger graph area
+    height: '700px',
     position: 'relative',
+    background: 'radial-gradient(circle, rgba(12,24,36,0.6) 0%, rgba(10,10,20,0.8) 100%)',
+    borderRadius: '16px',
+    boxShadow: '0 0 30px rgba(0, 234, 255, 0.2), inset 0 0 15px rgba(0, 234, 255, 0.1)',
+    transition: 'all 0.5s ease-in-out',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  svg: {
+    width: '100%',
+    height: '100%',
+  },
+  nodeLabel: {
+    fontSize: '14px',
+    fontWeight: 'bold',
+    fill: 'white',
+    textShadow: '0 0 5px black',
+  },
+  infoPanel: {
+    position: 'absolute',
+    bottom: '20px',
+    right: '20px',
+    background: 'rgba(2, 2, 8, 0.8)',
+    border: '1px solid #00eaff',
     borderRadius: '8px',
+    padding: '10px',
+    fontSize: '0.9rem',
+    boxShadow: '0 0 10px rgba(0, 234, 255, 0.3)',
+    zIndex: 10,
+  },
+  legend: {
+    position: 'absolute',
+    bottom: '20px',
+    left: '20px',
+    background: 'rgba(2, 2, 8, 0.8)',
+    border: '1px solid #00eaff',
+    borderRadius: '8px',
+    padding: '10px',
+    fontSize: '0.9rem',
+    boxShadow: '0 0 10px rgba(0, 234, 255, 0.3)',
+    zIndex: 10,
+  },
+  legendItem: {
+    display: 'flex',
+    alignItems: 'center',
+    marginBottom: '5px',
+  },
+  legendColor: {
+    width: '12px',
+    height: '12px',
+    borderRadius: '50%',
+    marginRight: '8px',
   }
 };
 
+// Global CSS for animations
+const globalStyles = `
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+    }
+}
+
+@keyframes flow {
+    from {
+        stroke-dashoffset: 20;
+    }
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+
+.edge {
+    stroke-dasharray: 5 5;
+    animation: flow 1s linear infinite;
+    stroke-linecap: round;
+}
+
+.tooltip {
+  position: absolute;
+  background: rgba(0,0,0,0.8);
+  padding: 8px 12px;
+  border-radius: 4px;
+  color: white;
+  font-size: 12px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 100;
+  transform: translate(-50%, -100%);
+  white-space: nowrap;
+}
+.node:hover + .tooltip {
+  opacity: 1;
+  transform: translate(-50%, -150%);
+}
+`;
+
 function App() {
   const [nodes, setNodes] = useState([]);
-  const graphRef = useRef(null);
-
-  const renderNetwork = useCallback(() => {
-    const container = graphRef.current;
-    if (!container || !nodes.length) return;
-
-    // Clear existing nodes
-    container.innerHTML = '';
-
-    const centerX = container.clientWidth / 2;
-    const centerY = container.clientHeight / 2;
-    const radius = Math.min(centerX, centerY) - 100;
-
-    // Draw edges first (if any nodes are connected)
-    if (nodes.length > 1) {
-      for (let i = 0; i < nodes.length; i++) {
-        for (let j = i + 1; j < nodes.length; j++) {
-          const angle1 = (i * 2 * Math.PI) / nodes.length;
-          const angle2 = (j * 2 * Math.PI) / nodes.length;
-          const x1 = centerX + radius * Math.cos(angle1);
-          const y1 = centerY + radius * Math.sin(angle1);
-          const x2 = centerX + radius * Math.cos(angle2);
-          const y2 = centerY + radius * Math.sin(angle2);
-
-          const edge = document.createElement('div');
-          const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-          const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
-
-          edge.style.cssText = `
-            position: absolute;
-            left: ${x1}px;
-            top: ${y1}px;
-            width: ${length}px;
-            height: 2px;
-            background: rgba(255, 255, 255, 0.3);
-            transform: rotate(${angle}deg);
-            transform-origin: left center;
-            z-index: 1;
-          `;
-          container.appendChild(edge);
-        }
-      }
-    }
-
-    nodes.forEach((node, index) => {
-      const angle = (index * 2 * Math.PI) / nodes.length;
-      const x = centerX + radius * Math.cos(angle);
-      const y = centerY + radius * Math.sin(angle);
-      
-      const nodeDiv = document.createElement('div');
-      nodeDiv.style.cssText = `
-        position: absolute;
-        left: ${x - 40}px;
-        top: ${y - 40}px;
-        width: 80px;
-        height: 80px;
-        background: ${node.color || '#4caf50'};
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: bold;
-        border: 3px solid white;
-        transition: all 0.3s ease;
-        z-index: 2;
-      `;
-      
-      const shortId = node.label.split('-').pop();
-      nodeDiv.innerHTML = `
-        ${shortId}
-        <div style="
-          position: absolute;
-          top: -25px;
-          left: 50%;
-          transform: translateX(-50%);
-          background: rgba(0,0,0,0.8);
-          padding: 4px 8px;
-          border-radius: 4px;
-          font-size: 12px;
-          opacity: 0;
-          transition: opacity 0.3s;
-          white-space: nowrap;
-        ">Port: ${node.port} | Load: ${node.load}%</div>
-      `;
-      
-      // Add hover effect for tooltip
-      nodeDiv.addEventListener('mouseenter', () => {
-        nodeDiv.querySelector('div').style.opacity = '1';
-      });
-      nodeDiv.addEventListener('mouseleave', () => {
-        nodeDiv.querySelector('div').style.opacity = '0';
-      });
-      container.appendChild(nodeDiv);
-    });
-  }, [nodes]);
+  const [edges, setEdges] = useState([]);
+  const [stats, setStats] = useState({ total_containers: 0, total_load: 0 });
+  const svgRef = useRef(null);
 
   const fetchGraphData = useCallback(async () => {
     try {
       const response = await axios.get(`${ROUTING_SERVER}/graph`);
-      const { nodes: backendNodes } = response.data;
-      console.log('Fetched nodes:', backendNodes);
+      const { nodes: backendNodes, edges: backendEdges, total_containers, total_load } = response.data;
       setNodes(backendNodes);
+      setEdges(backendEdges);
+      setStats({ total_containers, total_load });
     } catch (error) {
       console.error('Error fetching graph data:', error);
     }
   }, []);
 
+  const renderNetwork = useCallback(() => {
+    const svg = svgRef.current;
+    if (!svg || !nodes.length) return;
+
+    const width = svg.clientWidth;
+    const height = svg.clientHeight;
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const radius = Math.min(centerX, centerY) - 100;
+    const nodeMap = new Map(nodes.map(node => [node.id, node]));
+
+    // Use a <g> to group all elements for easier clearing and transformations
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    svg.innerHTML = '';
+    svg.appendChild(g);
+
+    // Calculate node positions once
+    const nodePositions = nodes.map((node, index) => {
+      const angle = (index * 2 * Math.PI) / nodes.length;
+      return {
+        x: centerX + radius * Math.cos(angle),
+        y: centerY + radius * Math.sin(angle),
+        id: node.id
+      };
+    });
+    const positionMap = new Map(nodePositions.map(pos => [pos.id, pos]));
+
+    // Draw edges first (so they are behind nodes)
+    edges.forEach(edge => {
+      const sourcePos = positionMap.get(edge.source);
+      const targetPos = positionMap.get(edge.target);
+
+      if (sourcePos && targetPos) {
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute('x1', sourcePos.x);
+        line.setAttribute('y1', sourcePos.y);
+        line.setAttribute('x2', targetPos.x);
+        line.setAttribute('y2', targetPos.y);
+        line.setAttribute('stroke', 'rgba(0, 234, 255, 0.4)');
+        line.setAttribute('stroke-width', '2');
+        line.classList.add('edge');
+        g.appendChild(line);
+      }
+    });
+
+    // Draw nodes and tooltips
+    nodes.forEach((node, index) => {
+      const pos = positionMap.get(node.id);
+      if (!pos) return;
+
+      const nodeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      nodeGroup.classList.add('node');
+
+      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      circle.setAttribute('cx', pos.x);
+      circle.setAttribute('cy', pos.y);
+      circle.setAttribute('r', 30);
+      circle.setAttribute('fill', node.color || '#4caf50');
+      circle.setAttribute('stroke', 'white');
+      circle.setAttribute('stroke-width', '2');
+      circle.setAttribute('box-shadow', '0 0 10px white');
+      nodeGroup.appendChild(circle);
+
+      const shortId = node.label.split('-').pop();
+      const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      text.setAttribute('x', pos.x);
+      text.setAttribute('y', pos.y + 5); // Adjust for vertical centering
+      text.setAttribute('text-anchor', 'middle');
+      text.textContent = shortId;
+      text.style.fill = 'white';
+      text.style.fontSize = '12px';
+      text.style.fontWeight = 'bold';
+      nodeGroup.appendChild(text);
+
+      g.appendChild(nodeGroup);
+    });
+  }, [nodes, edges]);
+
+  useEffect(() => {
+    // Add global styles to the document head
+    const styleSheet = document.createElement("style");
+    styleSheet.type = "text/css";
+    styleSheet.innerText = globalStyles;
+    document.head.appendChild(styleSheet);
+    return () => {
+      document.head.removeChild(styleSheet);
+    };
+  }, []);
+
   useEffect(() => {
     fetchGraphData();
-    const interval = setInterval(fetchGraphData, 1000); // Increased refresh rate to 1 second
+    const interval = setInterval(fetchGraphData, 1000); // 1-second refresh
     return () => clearInterval(interval);
   }, [fetchGraphData]);
 
   useEffect(() => {
     renderNetwork();
-  }, [nodes, renderNetwork]);
+  }, [nodes, edges, renderNetwork]);
 
   return (
     <div style={styles.container}>
-      <h1 style={{textAlign: 'center'}}>Container Network</h1>
-      <div ref={graphRef} style={styles.graphContainer} />
+      <h1 style={styles.title}>Container Network Monitoring</h1>
+      <div style={styles.graphContainer}>
+        <svg ref={svgRef} style={styles.svg}></svg>
+      </div>
+
+      <div style={styles.infoPanel}>
+        <p>Total Containers: <span style={{ color: '#fff', textShadow: '0 0 5px #fff' }}>{stats.total_containers}</span></p>
+        <p>Total Load: <span style={{ color: '#fff', textShadow: '0 0 5px #fff' }}>{stats.total_load}%</span></p>
+      </div>
+
+      <div style={styles.legend}>
+        <p style={{ fontWeight: 'bold' }}>Load Status</p>
+        <div style={styles.legendItem}>
+          <div style={{ ...styles.legendColor, background: 'green' }}></div>
+          <span>Low (0-25%)</span>
+        </div>
+        <div style={styles.legendItem}>
+          <div style={{ ...styles.legendColor, background: 'yellow' }}></div>
+          <span>Medium (26-75%)</span>
+        </div>
+        <div style={styles.legendItem}>
+          <div style={{ ...styles.legendColor, background: 'red' }}></div>
+          <span>High (76-100%)</span>
+        </div>
+      </div>
     </div>
   );
 }
